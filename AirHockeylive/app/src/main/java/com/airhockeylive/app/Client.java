@@ -33,7 +33,7 @@ public class Client
 
     private URI getPlayerUri;
 
-    private String defaultHost = "http://10.167.121.219";
+    private String defaultHost = "http://192.168.0.2";
 
     private int defaultPort = 3000;
 

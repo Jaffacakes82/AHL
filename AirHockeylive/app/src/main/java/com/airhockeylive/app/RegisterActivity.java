@@ -25,9 +25,9 @@ import android.widget.TextView;
 public class RegisterActivity extends Activity
 {
     /**
-     * Keep track of the login task to ensure we can cancel it if requested.
+     * Keep track of the register task to ensure we can cancel it if requested.
      */
-    private UserLoginTask mAuthTask = null;
+    private UserRegisterTask mRegisterTask = null;
 
     // Values for email and password at the time of the login attempt.
     private String username;
@@ -108,7 +108,7 @@ public class RegisterActivity extends Activity
 
     public void attemptRegister()
     {
-        if (mAuthTask != null)
+        if (mRegisterTask != null)
         {
             return;
         }
@@ -169,8 +169,8 @@ public class RegisterActivity extends Activity
             // perform the user login attempt.
             registerStatusMessageView.setText(R.string.login_progress_signing_in);
             showProgress(true);
-            mAuthTask = new UserLoginTask();
-            mAuthTask.execute((Void) null);
+            mRegisterTask = new UserRegisterTask();
+            mRegisterTask.execute((Void) null);
         }
     }
 
@@ -226,7 +226,7 @@ public class RegisterActivity extends Activity
      * Represents an asynchronous login/registration task used to authenticate
      * the user.
      */
-    public class UserLoginTask extends AsyncTask<Void, Void, Boolean>
+    public class UserRegisterTask extends AsyncTask<Void, Void, Boolean>
     {
         @Override
         protected Boolean doInBackground(Void... params)
@@ -250,7 +250,7 @@ public class RegisterActivity extends Activity
         @Override
         protected void onPostExecute(final Boolean success)
         {
-            mAuthTask = null;
+            mRegisterTask = null;
             showProgress(false);
 
             if (success)
@@ -269,7 +269,7 @@ public class RegisterActivity extends Activity
         @Override
         protected void onCancelled()
         {
-            mAuthTask = null;
+            mRegisterTask = null;
             showProgress(false);
         }
     }

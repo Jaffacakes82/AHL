@@ -149,6 +149,7 @@ app.post('/login', function(req, res)
 	var password = req.body.password;
 	
 	console.log("\n");
+	console.log("Logging in user.");
 	
 	LoginUser(username, password, function (success, result) 
 	{

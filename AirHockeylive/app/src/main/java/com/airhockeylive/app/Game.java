@@ -42,18 +42,17 @@ public class Game
         List<Game> openGamesList = new ArrayList<Game>();
         JSONArray openGames = client.FetchGames();
 
-        Game game = new Game();
-
         if (openGames.length() > 0)
         {
             for (int i = 0; i < openGames.length(); i++)
             {
                 try
                 {
+                    Game game = new Game();
                     JSONObject gameData = openGames.getJSONObject(i);
-
                     game.id = UUID.fromString(gameData.getString(Constants.GAME_ID));
-                    game.player1 = client.GetPlayer()
+                    game.player1 = client.GetPlayer(gameData.getString(Constants.PLAYER_ID));
+                    openGamesList.add(game);
                 }
                 catch (JSONException ex)
                 {
@@ -61,5 +60,7 @@ public class Game
                 }
             }
         }
+
+        return openGamesList;
     }
 }

@@ -12,5 +12,8 @@
     <string name="error_field_required">This field is required</string>
     <string name="title_activity_game">GameActivity</string>
     <string name="title_activity_game_list">GameListActivity</string>
-
+    <string name="table_head_owner">Owner</string>
+    <string name="table_head_status">Status</string>
+    <string name="table_head_play">Play</string>
+    <string name="games_list_progress">Fetching games list&#8230;</string>
 </resources>
