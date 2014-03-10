@@ -1,0 +1,2 @@
+1. No longer using TCP
+2. Wrote HTTP server that can create RSS feeds for reading by android app.

@@ -1,0 +1,11 @@
+After 3 days of trying to get the ethernet shield to connect to the Node.js server I have given up.
+
+Steps taken:
+1. Implement HTTP server
+2. Implement UDP server
+3. Implement TCP server
+4. Implement raw socket server
+
+No connection ever established.
+
+Workaround - Build C# client to read serial ports of arduino and forward data to Node.js server.
