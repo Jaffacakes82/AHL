@@ -25,8 +25,13 @@
             android:windowSoftInputMode="adjustResize|stateVisible" >
         </activity>
         <activity
-            android:name="com.airhockeylive.app.GameListActivity"
+            android:name="com.airhockeylive.app.GameManagementActivity"
             android:label="@string/title_activity_game_list" >
+        </activity>
+        <activity
+            android:name="com.airhockeylive.app.GameActivity"
+            android:label="@string/title_activity_game"
+            android:screenOrientation="landscape" >
         </activity>
     </application>
 

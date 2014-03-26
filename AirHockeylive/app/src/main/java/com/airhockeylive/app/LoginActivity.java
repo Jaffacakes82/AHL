@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
@@ -39,7 +38,6 @@ public class LoginActivity extends Activity
     private View loginFormView;
     private View loginStatusView;
     private TextView loginStatusMessageView;
-    private TextView playerPrompt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -244,8 +242,8 @@ public class LoginActivity extends Activity
 
             if (success)
             {
-                Intent gameList = new Intent(LoginActivity.this, GameListActivity.class);
-                gameList.putExtra(Constants.PLAYER, player);
+                Intent gameList = new Intent(LoginActivity.this, GameManagementActivity.class);
+                gameList.putExtra(Constants.PLAYER_OBJECT, player);
                 startActivity(gameList);
             }
             else

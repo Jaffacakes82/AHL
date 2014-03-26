@@ -4,6 +4,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -16,7 +17,7 @@ enum GameState
     NONE, OPEN, STARTED, FINISHED
 }
 
-public class Game
+public class Game implements Serializable
 {
     public UUID id;
 
@@ -51,7 +52,8 @@ public class Game
                     Game game = new Game();
                     JSONObject gameData = openGames.getJSONObject(i);
                     game.id = UUID.fromString(gameData.getString(Constants.GAME_ID));
-                    game.player1 = client.GetPlayer(gameData.getString(Constants.PLAYER_ID));
+                    game.player1 = client.GetPlayer(gameData.getString(Constants.GAME_PLAYER1));
+                    game.state = GameState.valueOf(gameData.getString(Constants.GAME_STATE));
                     openGamesList.add(game);
                 }
                 catch (JSONException ex)

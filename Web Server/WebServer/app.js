@@ -1,83 +1,96 @@
-/********************************************************************/
+/************************
+* Required packages.
+************************/
 var express = require('express');
 var xml = require('xmlbuilder');
 var mysql = require('mysql');
-/********************************************************************/
-/********************************************************************/
+
+/**********************************
+* Initial set up, start server.
+***********************************/
 var app = express();
 app.set('title', 'Air Hockey - Live!');
 app.use(express.json());
 app.listen(3000);
-/********************************************************************/
-/********************************************************************/
+
+/****************************
+* Database configuration
+****************************/
 var db_config = {
-  host: 'localhost',
+	host: 'localhost',
     user: 'root',
     password: '',
     database: 'airhockeylive'
 };
 
 var connection = mysql.createConnection(db_config);
-/********************************************************************/
-/********************************************************************/
+
+/***********************
+* Clear terminal window
+***********************/
 var lines = process.stdout.getWindowSize()[1];
 
 for(var i = 0; i < lines; i++) {
     console.log('\r\n');
 }
-/********************************************************************/
-/********************************************************************/
+
 console.log("-------------------------------------");
 console.log("Air Hockey - Live! Server. Port: 3000");
-/********************************************************************/
-/********************************************************************/
+
+/*************************
+* Variable declarations.
+*************************/
 var date = new Date();
 var feed;
 var gameStarted = false;
-/********************************************************************
+
+/***********************
 * BASE 
-*********************************************************************/
+************************/
 app.get('/', function(req, res)
 {
 	res.send("Air Hockey - Live!");
 });
 
-/********************************************************************
+/*********************************
 * HANDLE GAME STARTED GET REQUEST
-*********************************************************************/
+***********************************/
 app.get('/gamestarted', function (req,res)
 {
+	console.log("Game start status requested.");
 	res.send(gameStarted);
 });
 
-/********************************************************************
-* HANDLE START GAME GET REQUEST
-*********************************************************************/
+/*******************************
+* HANDLE START GAME REQUEST (SHOULD BE A POST AS WELL I THINK)
+********************************/
 app.get('/startgame', function(req, res)
 {
 	gameStarted = true;
 	InitiateGame();
-	RefreshRSS(res, 0, 0);
+	RefreshXML(res, 0,0);
 });
 
-/********************************************************************
-* HANDLE ADD ITEM GET REQUEST (THIS SHOULD BE A POST)
-*********************************************************************/
-app.get('/goal', function (req,res)
+/*****************************************************
+* HANDLE ADD ITEM GET REQUEST
+******************************************************/
+app.post('/goal', function (req,res)
 {
-	var score1 = req.query.player1score;
-	var score2 = req.query.player2score;
+	console.log(req.body);
+
+	var score1 = req.body.player1;
+	var score2 = req.body.player2;
 	
 	console.log("Player 1 score: " + score1);
 	console.log("Player 2 score: " + score2);
 	
-	RefreshRSS(res, score1, score2);
+	RefreshXML(res, score1, score2);
 });
 
 
-/********************************************************************
-* HANDLE RSS GET REQUEST
-*********************************************************************/
+/****************************
+* HANDLE GAME XML GET REQUEST
+*****************************/
 app.get('/game', function(req,res)
 {
 	if (feed == null)
@@ -90,9 +103,9 @@ app.get('/game', function(req,res)
 	}
 });
 
-/********************************************************************
+/******************************
 * HANDLE REGISTER POST REQUEST
-*********************************************************************/
+*******************************/
 app.post('/register', function(req, res)
 {
 	var id = req.body.id;
@@ -120,29 +133,29 @@ app.post('/register', function(req, res)
 	
 });
 
-/************************************************
-* GET LIST OF AVAILABLE GAMES					*
-************************************************/
+/******************************
+* GET LIST OF AVAILABLE GAMES	
+*******************************/
 app.get('/gameslist', function (req,res)
 {
 	console.log("Getting games list.");
 	
 	FetchGamesList(function (success, result)
 	{
-			if (success)
-			{
-				res.send(result);
-			}
-			else
-			{
-				console.log(result);
-			}
+		if (success)
+		{
+			res.send(result);
+		}
+		else
+		{
+			console.log(result);
+		}
 	});
 });
 
-/********************************************************************
+/***************************
 * HANDLE LOGIN POST REQUEST
-*********************************************************************/
+****************************/
 app.post('/login', function(req, res)
 {
 	var username = req.body.username;
@@ -173,12 +186,46 @@ app.post('/login', function(req, res)
 	
 });
 
-/****************************************
-* FETCH GAMES LIST FUNCTION
-*****************************************/
-function FetchGamesList(callback)
+/**************************
+* GET PLAYER POST REQUEST 
+***************************/
+app.post('/getplayer', function (req, res)
 {
-	var sql = 'SELECT * FROM game WHERE (State = \'OPEN\')'
+	var id = req.body.ID;
+	
+	console.log("\n");
+	console.log("Fetching player with ID: " + id);
+	
+	FetchPlayer(id, function (success, result)
+	{
+		if (success)
+		{
+			if (result.length == 0)
+			{
+				console.log("Unable to fetch player with id: " + id);
+			}
+			else
+			{
+				console.log("Found player with id: " + id);
+				res.send(result);
+			}
+		}
+		else
+		{
+			console.log(result);
+		}
+	});
+});
+
+/***********************
+* FETCH PLAYER FUNCTION
+************************/
+function FetchPlayer(id, callback)
+{
+	var sql = 'SELECT * FROM player WHERE (id = ?)';
+	var inserts = [ id ];
+	
+	sql = mysql.format(sql, inserts);
 	
 	var query = connection.query(sql, function (err, result)
 	{
@@ -189,6 +236,31 @@ function FetchGamesList(callback)
 		}
 		else
 		{
+			callback(true, result);
+		}
+	});
+}
+
+/****************************
+* FETCH GAMES LIST FUNCTION
+****************************/
+function FetchGamesList(callback)
+{
+	var inserts = [ 'OPEN' ];
+	var sql = 'SELECT * FROM game WHERE (State = ?)';
+	
+	sql = mysql.format(sql, inserts);
+	
+	var query = connection.query(sql, function (err, result)
+	{
+		if (err)
+		{
+			console.log(err);
+			callback(false, result);
+		}
+		else
+		{
+			console.log("Got here");
 			callback(true, result);
 		}
 	});
@@ -245,7 +317,7 @@ function LoginUser(username, password, callback)
 /********************************************************************
 * REFRESH RSS FUNCTION
 *********************************************************************/
-function RefreshRSS(response, player1Score, player2Score)
+function RefreshXML(response, player1Score, player2Score)
 {
 	feed = xml.create('game');
 	

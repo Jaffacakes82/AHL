@@ -16,4 +16,5 @@
     <string name="table_head_status">Status</string>
     <string name="table_head_play">Play</string>
     <string name="games_list_progress">Fetching games list&#8230;</string>
+    <string name="create_game_button">Create Game&#8230;</string>
 </resources>

@@ -8,7 +8,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,27 +20,46 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GameListActivity extends Activity
+public class GameManagementActivity extends Activity
 {
+
+    private Player loggedInPlayer;
     private List<Game> openGames;
     private GameListTask mGameListTask = null;
     private View gamesListStatusView;
     private View gamesListView;
+    private View tableHeadView;
+    private View noGamesView;
     private TextView gamesListStatusMessageView;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_gamemanagement);
+
+        loggedInPlayer = (Player) getIntent().getSerializableExtra(Constants.PLAYER_OBJECT);
 
         gamesListView = findViewById(R.id.gamesTable);
         gamesListStatusView = findViewById(R.id.gamelist_status);
+        noGamesView = findViewById(R.id.nogames);
+        tableHeadView = findViewById(R.id.gamesTableHead);
         gamesListStatusMessageView = (TextView) findViewById(R.id.gamelist_status_message);
 
-        getListOfGames();
-    }
+        noGamesView.setVisibility(noGamesView.GONE);
 
+        if (mGameListTask != null)
+        {
+            return;
+        }
+
+        // Show a progress spinner, and kick off a background task to
+        // perform the user login attempt.
+        gamesListStatusMessageView.setText(R.string.games_list_progress);
+        showProgress(true);
+        mGameListTask = new GameListTask();
+        mGameListTask.execute((Void) null);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
@@ -113,42 +131,60 @@ public class GameListActivity extends Activity
         }
     }
 
-    public void getListOfGames()
+    View.OnClickListener getOnClickPlayGame(final Button button)
     {
-        if (mGameListTask != null)
+        return new View.OnClickListener()
         {
-            return;
-        }
+            public void onClick(View v)
+            {
+                int gameIndex = v.getId();
 
-        // Show a progress spinner, and kick off a background task to
-        // perform the user login attempt.
-        gamesListStatusMessageView.setText(R.string.games_list_progress);
-        showProgress(true);
-        mGameListTask = new GameListTask();
-        mGameListTask.execute((Void) null);
+                Intent goToGame = new Intent(GameManagementActivity.this, GameActivity.class);
+                goToGame.putExtra(Constants.GAME_OBJECT, openGames.get(gameIndex));
+                goToGame.putExtra(Constants.PLAYER_OBJECT, loggedInPlayer);
+                startActivity(goToGame);
+            }
+        };
+    }
+
+    public void displayGames()
+    {
+        TableLayout mainTable = (TableLayout) gamesListView;
 
         if (openGames.size() > 0)
         {
-            setContentView(R.layout.activity_gamelist);
-
-            TableLayout mainTable = (TableLayout)findViewById(R.id.gamesTable);
-
             for (int i = 0; i < openGames.size(); i++)
             {
                 TableRow row = new TableRow(this);
                 TableRow.LayoutParams rowParams = new TableRow.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT);
-                rowParams.setMargins(20,20,20,20);
-                row.setLayoutParams(rowParams);
+
+                TextView gameId = new TextView(this);
+                gameId.setText(openGames.get(i).id.toString());
+                gameId.setVisibility(gameId.GONE);
 
                 TextView ownerView = new TextView(this);
                 ownerView.setText(openGames.get(i).player1.username);
+                ownerView.setLayoutParams(new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT, TableRow.LayoutParams.WRAP_CONTENT, 1f));
 
                 TextView statusView = new TextView(this);
                 statusView.setText(openGames.get(i).state.toString());
+                statusView.setLayoutParams(new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT, TableRow.LayoutParams.WRAP_CONTENT, 1f));
 
                 Button playButton = new Button(this);
-                playButton.setText("Play");
 
+                if (openGames.get(i).player1.id.compareTo(loggedInPlayer.id) == 0)
+                {
+                    playButton.setText("View");
+                }
+                else
+                {
+                    playButton.setText("Play");
+                }
+                playButton.setId(i);
+                playButton.setOnClickListener(getOnClickPlayGame(playButton));
+                playButton.setLayoutParams(new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT, TableRow.LayoutParams.WRAP_CONTENT, 1f));
+
+                row.addView(gameId);
                 row.addView(ownerView);
                 row.addView(statusView);
                 row.addView(playButton);
@@ -158,9 +194,9 @@ public class GameListActivity extends Activity
         }
         else
         {
-            setContentView(R.layout.nogames);
+            noGamesView.setVisibility(noGamesView.VISIBLE);
+            tableHeadView.setVisibility(tableHeadView.GONE);
         }
-
     }
 
     /**
@@ -193,7 +229,7 @@ public class GameListActivity extends Activity
 
             if (success)
             {
-                finish();
+                displayGames();
             }
             else
             {

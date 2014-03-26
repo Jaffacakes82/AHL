@@ -49,16 +49,16 @@ public class Client
     {
         registerUri = URI.create(String.format("%s:%d%s", host, port, registerQuery));
         loginUri = URI.create(String.format("%s:%d%s", host, port, loginQuery));
-        gamesListUri = URI.create(String.format("%s:%d%s", host, port, getGamesQuery));
         getPlayerUri = URI.create(String.format("%s:%d%s", host, port, getPlayerQuery));
+        gamesListUri = URI.create(String.format("%s:%d%s", defaultHost, defaultPort, getGamesQuery));
     }
 
     public Client()
     {
         registerUri = URI.create(String.format("%s:%d%s", defaultHost, defaultPort, registerQuery));
         loginUri = URI.create(String.format("%s:%d%s", defaultHost, defaultPort, loginQuery));
-        gamesListUri = URI.create(String.format("%s:%d%s", defaultHost, defaultPort, getGamesQuery));
         getPlayerUri = URI.create(String.format("%s:%d%s", defaultHost, defaultPort, getPlayerQuery));
+        gamesListUri = URI.create(String.format("%s:%d%s", defaultHost, defaultPort, getGamesQuery));
     }
 
     public JSONArray FetchGames()

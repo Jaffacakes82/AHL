@@ -1,6 +1,0 @@
-C:\Users\Joe\Desktop\Final Year At University\Final Project\Code\MiddleClient\MiddleClient\MiddleClient\bin\Debug\MiddleClient.exe.config
-C:\Users\Joe\Desktop\Final Year At University\Final Project\Code\MiddleClient\MiddleClient\MiddleClient\bin\Debug\MiddleClient.exe
-C:\Users\Joe\Desktop\Final Year At University\Final Project\Code\MiddleClient\MiddleClient\MiddleClient\bin\Debug\MiddleClient.pdb
-C:\Users\Joe\Desktop\Final Year At University\Final Project\Code\MiddleClient\MiddleClient\MiddleClient\obj\Debug\MiddleClient.csprojResolveAssemblyReference.cache
-C:\Users\Joe\Desktop\Final Year At University\Final Project\Code\MiddleClient\MiddleClient\MiddleClient\obj\Debug\MiddleClient.exe
-C:\Users\Joe\Desktop\Final Year At University\Final Project\Code\MiddleClient\MiddleClient\MiddleClient\obj\Debug\MiddleClient.pdb
