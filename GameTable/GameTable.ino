@@ -18,7 +18,7 @@ enum Player
 
 /* Globals */
 byte mac[] = { 0x90, 0xA2, 0xDA, 0x0D, 0x0E, 0x96 }; // MAC Address of the ethernet shield.
-IPAddress server(192,168,1,3); // IP address of the server as it does not have a fully qualified domain name
+IPAddress server(192,168,0,6); // IP address of the server as it does not have a fully qualified domain name
 IPAddress ip(192,168,1,177); // Set the static IP address to use if the DHCP fails to assign
 int player1Score = 0; // Player 1 goal score
 int player2Score = 0; // Player 2 goal score

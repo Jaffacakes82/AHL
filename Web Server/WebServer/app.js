@@ -4,6 +4,7 @@
 var express = require('express');
 var xml = require('xmlbuilder');
 var mysql = require('mysql');
+var twitter = require('twit')
 
 /**********************************
 * Initial set up, start server.
@@ -12,6 +13,16 @@ var app = express();
 app.set('title', 'Air Hockey - Live!');
 app.use(express.json());
 app.listen(3000);
+
+/*************************
+* Twitter app set up 
+*************************/
+var tweet = new twitter({
+    consumer_key:         'mlXD6Una34mefXBDWc32Q'
+  , consumer_secret:      'oj8eVta5jpuKNGRlBIfTDsUcl4EJ7Z5o8T3OHgYABc'
+  , access_token:         '2362907707-h2z0ddOeousb4sdbkPTxPIZgV7H1sHfC5STgYnB'
+  , access_token_secret:  'E5s5civPTb04b9vxWB9ZTpxCfaLrF7bewcqk4yTIuT8xM'
+})
 
 /****************************
 * Database configuration
@@ -76,13 +87,21 @@ app.get('/startgame', function(req, res)
 ******************************************************/
 app.post('/goal', function (req,res)
 {
-	console.log(req.body);
-
 	var score1 = req.body.player1;
 	var score2 = req.body.player2;
 	
 	console.log("Player 1 score: " + score1);
 	console.log("Player 2 score: " + score2);
+	
+	tweet.post('statuses/update', { status: 'Hi @Rithium - this is an automatic tweet from Air Hockey - Live!' }, function(err, reply) {
+		
+		if (err)
+		{
+			console.log(err);
+		}
+		
+		console.log(reply);
+	})
 	
 	RefreshXML(res, score1, score2);
 });

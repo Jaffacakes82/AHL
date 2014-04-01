@@ -10,6 +10,7 @@
 	"rss" : "latest",
     "express": "3.4.8",
     "jade": "*",
-	"xmlbuilder" : "latest"
+	"xmlbuilder" : "latest",
+	"twit" : "latest"
   }
 }
