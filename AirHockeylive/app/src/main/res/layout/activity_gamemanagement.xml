@@ -56,17 +56,21 @@
             android:layout_marginTop="250px"/>
     </RelativeLayout>
     <!-- Games list progress -->
-    <LinearLayout android:id="@+id/gamelist_status"
-                  android:visibility="gone"
-                  android:layout_width="wrap_content"
-                  android:layout_height="wrap_content"
-                  android:layout_gravity="center"
-                  android:gravity="center_horizontal"
-                  android:orientation="vertical">
-        <ProgressBar style="?android:attr/progressBarStyleLarge"
-                     android:layout_width="wrap_content"
-                     android:layout_height="wrap_content"
-                     android:layout_marginBottom="8dp"/>
+    <LinearLayout
+        android:id="@+id/gamelist_status"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <ProgressBar
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"/>
+
         <TextView
             android:id="@+id/gamelist_status_message"
             android:textAppearance="?android:attr/textAppearanceMedium"
@@ -74,7 +78,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:text="@string/games_list_progress" />
+            android:text="@string/games_list_progress"/>
     </LinearLayout>
 
 

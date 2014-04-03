@@ -65,4 +65,43 @@ public class Game implements Serializable
 
         return openGamesList;
     }
+
+    //Build the game object from the json object that is returned from the server
+    public static Game GetGame(UUID id)
+    {
+        Client client = new Client();
+        Game game = new Game();
+        JSONObject gameData = client.GetGame(id.toString());
+
+        try
+        {
+            game.id = UUID.fromString(gameData.getString(Constants.GAME_ID));
+            game.player1 = client.GetPlayer(gameData.getString(Constants.GAME_PLAYER1));
+
+            if (!gameData.isNull(Constants.GAME_PLAYER2))
+            {
+                game.player2 = client.GetPlayer(gameData.getString(Constants.GAME_PLAYER2));
+            }
+
+            game.state = GameState.valueOf(gameData.getString(Constants.GAME_STATE));
+        }
+        catch (JSONException e)
+        {
+            // TODO: do something useful
+        }
+
+        return game;
+    }
+
+    public Game CreateGame(Player creator)
+    {
+        Client client = new Client();
+        this.id = UUID.randomUUID();
+        this.player1 = creator;
+        this.state = GameState.OPEN;
+
+        client.CreateGame(this);
+
+        return this;
+    }
 }

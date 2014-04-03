@@ -22,15 +22,16 @@ import java.util.List;
 
 public class GameManagementActivity extends Activity
 {
-
     private Player loggedInPlayer;
     private List<Game> openGames;
     private GameListTask mGameListTask = null;
+    private CreateGameTask mCreateGameTask = null;
     private View gamesListStatusView;
     private View gamesListView;
     private View tableHeadView;
     private View noGamesView;
     private TextView gamesListStatusMessageView;
+    private Button createGameButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -45,6 +46,7 @@ public class GameManagementActivity extends Activity
         noGamesView = findViewById(R.id.nogames);
         tableHeadView = findViewById(R.id.gamesTableHead);
         gamesListStatusMessageView = (TextView) findViewById(R.id.gamelist_status_message);
+        createGameButton = (Button) findViewById(R.id.create_game_button);
 
         noGamesView.setVisibility(noGamesView.GONE);
 
@@ -59,6 +61,18 @@ public class GameManagementActivity extends Activity
         showProgress(true);
         mGameListTask = new GameListTask();
         mGameListTask.execute((Void) null);
+
+        createGameButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                gamesListStatusMessageView.setText(R.string.create_game_progress);
+                showProgress(true);
+                mCreateGameTask = new CreateGameTask();
+                mCreateGameTask.execute((Void) null);
+            }
+        });
     }
 
     @Override
@@ -230,6 +244,55 @@ public class GameManagementActivity extends Activity
             if (success)
             {
                 displayGames();
+            }
+            else
+            {
+            }
+        }
+
+        @Override
+        protected void onCancelled()
+        {
+            mGameListTask = null;
+            showProgress(false);
+        }
+    }
+
+    /**
+     * Represents an asynchronous login/registration task used to authenticate
+     * the user.
+     */
+    public class CreateGameTask extends AsyncTask<Void, Void, Boolean>
+    {
+        Game createdGame = new Game();
+
+        @Override
+        protected Boolean doInBackground(Void... params)
+        {
+            try
+            {
+                createdGame.CreateGame(loggedInPlayer);
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success)
+        {
+            mGameListTask = null;
+            showProgress(false);
+
+            if (success)
+            {
+                Intent goToGame = new Intent(GameManagementActivity.this, GameActivity.class);
+                goToGame.putExtra(Constants.GAME_OBJECT, createdGame);
+                goToGame.putExtra(Constants.PLAYER_OBJECT, loggedInPlayer);
+                startActivity(goToGame);
             }
             else
             {

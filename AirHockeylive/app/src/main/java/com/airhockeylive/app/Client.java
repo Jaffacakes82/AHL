@@ -33,7 +33,15 @@ public class Client
 
     private URI getPlayerUri;
 
-    private String defaultHost = "http://192.168.0.2";
+    private URI updateGameUri;
+
+    private URI getGameUri;
+
+    private URI createGameUri;
+
+    private URI startGameUri;
+
+    private String defaultHost = "http://192.168.0.3";
 
     private int defaultPort = 3000;
 
@@ -45,13 +53,13 @@ public class Client
 
     private String getPlayerQuery = "/getplayer";
 
-    public Client(String host, int port)
-    {
-        registerUri = URI.create(String.format("%s:%d%s", host, port, registerQuery));
-        loginUri = URI.create(String.format("%s:%d%s", host, port, loginQuery));
-        getPlayerUri = URI.create(String.format("%s:%d%s", host, port, getPlayerQuery));
-        gamesListUri = URI.create(String.format("%s:%d%s", defaultHost, defaultPort, getGamesQuery));
-    }
+    private String updateGameQuery = "/updategame";
+
+    private String getGameQuery = "/getgame";
+
+    private String createGameQuery = "/creategame";
+
+    private String startGameQuery = "/startgame";
 
     public Client()
     {
@@ -59,6 +67,160 @@ public class Client
         loginUri = URI.create(String.format("%s:%d%s", defaultHost, defaultPort, loginQuery));
         getPlayerUri = URI.create(String.format("%s:%d%s", defaultHost, defaultPort, getPlayerQuery));
         gamesListUri = URI.create(String.format("%s:%d%s", defaultHost, defaultPort, getGamesQuery));
+        updateGameUri = URI.create(String.format("%s:%d%s", defaultHost, defaultPort, updateGameQuery));
+        getGameUri = URI.create(String.format("%s:%d%s", defaultHost, defaultPort, getGameQuery));
+        createGameUri = URI.create(String.format("%s:%d%s", defaultHost, defaultPort, createGameQuery));
+        startGameUri = URI.create(String.format("%s:%d%s", defaultHost, defaultPort, startGameQuery));
+    }
+
+    public boolean StartGame(UUID gameId)
+    {
+        HttpClient client = new DefaultHttpClient();
+        JSONObject gameData = new JSONObject();
+        String responseString;
+
+        try
+        {
+            gameData.put(Constants.GAME_ID, gameId);
+        }
+        catch (JSONException e)
+        {
+            return false;
+        }
+
+        try
+        {
+            HttpPost request = new HttpPost(this.startGameUri);
+            StringEntity jsonString = new StringEntity(gameData.toString());
+
+            request.addHeader("content-type", "application/json");
+            request.setEntity(jsonString);
+
+            HttpResponse response = client.execute(request);
+            HttpEntity responseEntity = response.getEntity();
+            responseString = EntityUtils.toString(responseEntity);
+        }
+        catch (Exception ex)
+        {
+            return false;
+        }
+        finally
+        {
+            client.getConnectionManager().shutdown();
+        }
+
+        if (responseString.equals("true"))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public boolean CreateGame(Game gameToBeCreated)
+    {
+        HttpClient client = new DefaultHttpClient();
+        JSONObject gameData = new JSONObject();
+        String responseString;
+
+        try
+        {
+            gameData.put(Constants.GAME_ID, gameToBeCreated.id);
+            gameData.put(Constants.GAME_PLAYER1, gameToBeCreated.player1.id);
+            gameData.put(Constants.GAME_STATE, gameToBeCreated.state.toString());
+        }
+        catch (JSONException e)
+        {
+            return false;
+        }
+
+        try
+        {
+            HttpPost request = new HttpPost(this.createGameUri);
+            StringEntity jsonString = new StringEntity(gameData.toString());
+
+            request.addHeader("content-type", "application/json");
+            request.setEntity(jsonString);
+
+            HttpResponse response = client.execute(request);
+            HttpEntity responseEntity = response.getEntity();
+            responseString = EntityUtils.toString(responseEntity);
+        }
+        catch (Exception ex)
+        {
+            return false;
+        }
+        finally
+        {
+            client.getConnectionManager().shutdown();
+        }
+
+        if (responseString.equals("true"))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    // Sends the updated game data to the server.
+    public boolean UpdateGame(Game currentGame)
+    {
+        HttpClient client = new DefaultHttpClient();
+        JSONObject gameData = new JSONObject();
+        String responseString;
+
+        try
+        {
+            gameData.put(Constants.GAME_ID, currentGame.id);
+            gameData.put(Constants.GAME_PLAYER1, currentGame.player1.id);
+            gameData.put(Constants.GAME_PLAYER2, currentGame.player2.id);
+            gameData.put(Constants.GAME_STATE, currentGame.state.toString());
+
+            if (currentGame.state == GameState.STARTED)
+            {
+                gameData.put(Constants.GAME_SCOREP1, currentGame.player1Score);
+                gameData.put(Constants.GAME_SCOREP2, currentGame.player2Score);
+            }
+        }
+        catch (JSONException e)
+        {
+            return false;
+        }
+
+        try
+        {
+            HttpPost request = new HttpPost(this.updateGameUri);
+            StringEntity jsonString = new StringEntity(gameData.toString());
+
+            request.addHeader("content-type", "application/json");
+            request.setEntity(jsonString);
+
+            HttpResponse response = client.execute(request);
+            HttpEntity responseEntity = response.getEntity();
+            responseString = EntityUtils.toString(responseEntity);
+        }
+        catch (Exception ex)
+        {
+            return false;
+        }
+        finally
+        {
+            client.getConnectionManager().shutdown();
+        }
+
+        if (responseString.equals("true"))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     public JSONArray FetchGames()
@@ -139,6 +301,55 @@ public class Client
         }
     }
 
+    //Fetch a game from the database with a given ID
+    public JSONObject GetGame(String id)
+    {
+        HttpClient client = new DefaultHttpClient();
+        JSONObject gameIdData = new JSONObject();
+        String responseString;
+        JSONArray gameDataArray;
+        JSONObject gameData;
+
+        try
+        {
+            gameIdData.put(Constants.GAME_ID, id);
+        }
+        catch (JSONException e)
+        {
+            // TODO: do something
+        }
+
+        try
+        {
+            HttpPost request = new HttpPost(this.getGameUri);
+            StringEntity jsonString = new StringEntity(gameIdData.toString());
+
+            request.addHeader("content-type", "application/json");
+            request.setEntity(jsonString);
+
+            HttpResponse response = client.execute(request);
+            HttpEntity responseEntity = response.getEntity();
+            responseString = EntityUtils.toString(responseEntity);
+            gameDataArray = new JSONArray(responseString);
+
+            if (gameDataArray.length() == 1)
+            {
+                gameData = gameDataArray.getJSONObject(0);
+                return gameData;
+            }
+        }
+        catch (Exception ex)
+        {
+            return null;
+        }
+        finally
+        {
+            client.getConnectionManager().shutdown();
+        }
+
+        return null;
+    }
+
     //Fetch a player from the database from a given ID
     public Player GetPlayer(String id)
     {
@@ -153,7 +364,7 @@ public class Client
         }
         catch (JSONException ex)
         {
-            //
+            // TODO: do something
         }
 
         try

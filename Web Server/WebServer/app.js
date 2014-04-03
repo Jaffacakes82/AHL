@@ -2,7 +2,6 @@
 * Required packages.
 ************************/
 var express = require('express');
-var xml = require('xmlbuilder');
 var mysql = require('mysql');
 var twitter = require('twit')
 
@@ -49,10 +48,8 @@ console.log("-------------------------------------");
 console.log("Air Hockey - Live! Server. Port: 3000");
 
 /*************************
-* Variable declarations.
+* Global Variable Declarations.
 *************************/
-var date = new Date();
-var feed;
 var gameStarted = false;
 
 /***********************
@@ -72,14 +69,21 @@ app.get('/gamestarted', function (req,res)
 	res.send(gameStarted);
 });
 
-/*******************************
-* HANDLE START GAME REQUEST (SHOULD BE A POST AS WELL I THINK)
-********************************/
-app.get('/startgame', function(req, res)
+/***************************
+* HANDLE START GAME REQUEST
+****************************/
+app.post('/startgame', function(req, res)
 {
 	gameStarted = true;
-	InitiateGame();
-	RefreshXML(res, 0,0);
+	var gameId = req.body.ID;
+	
+	console.log(gameId);
+	
+	if (gameStarted)
+	{
+		res.send("true");
+	}
+	
 });
 
 /*****************************************************
@@ -93,17 +97,7 @@ app.post('/goal', function (req,res)
 	console.log("Player 1 score: " + score1);
 	console.log("Player 2 score: " + score2);
 	
-	tweet.post('statuses/update', { status: 'Hi @Rithium - this is an automatic tweet from Air Hockey - Live!' }, function(err, reply) {
-		
-		if (err)
-		{
-			console.log(err);
-		}
-		
-		console.log(reply);
-	})
-	
-	RefreshXML(res, score1, score2);
+	RefreshScore(res, score1, score2);
 });
 
 
@@ -150,6 +144,32 @@ app.post('/register', function(req, res)
 		}
 	});
 	
+});
+
+/*******************
+* Post: Create Game
+********************/
+app.post('/creategame', function (req, res)
+{
+	var id = req.body.ID;
+	var player1 = req.body.Player1;
+	var state = req.body.State;
+	
+	console.log("Creating game with ID: " + id);
+	
+	CreateGame(id, player1, state, function (success)
+	{
+		if (success)
+		{
+			console.log("Game created with ID: " + id + " by player with ID: " + player1);
+			res.send("true");
+		}
+		else
+		{
+			console.log("Failed to create game.");
+			res.send("false");
+		}
+	});
 });
 
 /******************************
@@ -236,12 +256,122 @@ app.post('/getplayer', function (req, res)
 	});
 });
 
+/**************************
+* GET GAME POST REQUEST 
+***************************/
+app.post('/getgame', function (req, res)
+{
+	var id = req.body.ID;
+	
+	console.log("\n");
+	console.log("Fetching game with ID: " + id);
+	
+	FetchGame(id, function (success, result)
+	{
+		if (success)
+		{
+			if (result.length == 0)
+			{
+				console.log("Unable to fetch game with id: " + id);
+			}
+			else
+			{
+				console.log("Found game with id: " + id);
+				res.send(result);
+			}
+		}
+		else
+		{
+			console.log(result);
+		}
+	});
+});
+
+/******************
+* Post: Update Game
+*******************/
+app.post('/updategame', function (req,res)
+{
+	var id = req.body.ID;
+	var player1 = req.body.Player1;
+	var player2 = req.body.Player2;
+	var state = req.body.State;
+	var scorep1 = req.body.Player1Score;
+	var scorep2 = req.body.Player2Score;
+	
+	if (id != null)
+	{
+		console.log("Updating game with ID: " + id);
+		
+		UpdateGame(id, player1, player2, state, scorep1, scorep2, function (success) 
+		{
+			if (success)
+			{
+				console.log("Game Updated Successfully.");
+				res.send("true");
+			}
+			else
+			{
+				console.log("Failed to update game.");
+				res.send("false");
+			}
+		});
+	}
+});
+
+/********************
+CREATE GAME FUNCTION
+********************/
+function CreateGame(id, player1, state, callback)
+{
+	var sql = 'INSERT INTO game (ID, Player1, State) VALUES (?,?,?)'
+	var inserts = [ id, player1, state ];
+	
+	sql = mysql.format(sql, inserts);
+	
+	var query = connection.query(sql, function (err, result)
+	{
+		if (err)
+		{
+			console.log(err);
+			callback(false);
+		}
+		else
+		{
+			callback(true);
+		}
+	});
+}
 /***********************
 * FETCH PLAYER FUNCTION
 ************************/
 function FetchPlayer(id, callback)
 {
 	var sql = 'SELECT * FROM player WHERE (id = ?)';
+	var inserts = [ id ];
+	
+	sql = mysql.format(sql, inserts);
+	
+	var query = connection.query(sql, function (err, result)
+	{
+		if (err)
+		{
+			console.log(err);
+			callback(false, result);
+		}
+		else
+		{
+			callback(true, result);
+		}
+	});
+}
+
+/**********************
+* FETCH GAME FUNCTION 
+**********************/
+function FetchGame(id, callback)
+{
+	var sql = 'SELECT * FROM game WHERE (id = ?)';
 	var inserts = [ id ];
 	
 	sql = mysql.format(sql, inserts);
@@ -279,7 +409,6 @@ function FetchGamesList(callback)
 		}
 		else
 		{
-			console.log("Got here");
 			callback(true, result);
 		}
 	});
@@ -292,6 +421,30 @@ function RegisterUser(id, username, password, name, twitter, callback)
 {
 	var sql = 'INSERT INTO Player VALUES(?,?,?,?,?)'
 	var inserts = [ id, username, password, name, twitter ];
+	
+	sql = mysql.format(sql, inserts);
+	
+	var query = connection.query(sql,  function (err, result)
+	{
+		if (err)
+		{
+			console.log(err);
+			callback(false);
+		}
+		else
+		{
+			callback(true);
+		}
+	});
+}
+
+/********************************************************************
+* REGISTER USER FUNCTION
+*********************************************************************/
+function UpdateGame(id, player1, player2, state, scorep1, scorep2, callback)
+{
+	var sql = 'UPDATE game SET Player1 = ?, Player2 = ?, State = ?, Player1Score = ?, Player2Score = ? WHERE ID = ? '
+	var inserts = [ player1, player2, state, scorep1, scorep2, id ];
 	
 	sql = mysql.format(sql, inserts);
 	
@@ -334,25 +487,14 @@ function LoginUser(username, password, callback)
 }
 
 /********************************************************************
-* REFRESH RSS FUNCTION
+* REFRESH XML FUNCTION
 *********************************************************************/
-function RefreshXML(response, player1Score, player2Score)
+function RefreshScore(response, player1Score, player2Score)
 {
-	feed = xml.create('game');
+	var scores = [];
 	
-	feed.ele('player1').ele('score', player1Score);
-	feed.ele('player2').ele('score', player2Score);
-		
-	feed = feed.end({ pretty: true, indent: '\t' , newline: '\n' });
+	scores.push({"player1score":player1score});
+	scores.push({"player2score":plsayer2score});
 	
-	response.send(feed);
-}	
-
-
-/********************************************************************
-* INITIATE GAME FUNCTION
-*********************************************************************/
-function InitiateGame()
-{
-	gameStarted = true;
+	response.send(JSON.stringify(scores));
 }
