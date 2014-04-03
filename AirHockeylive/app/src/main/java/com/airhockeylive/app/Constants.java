@@ -20,5 +20,6 @@ public class Constants
     public static final String GAME_WINNER = "Winner";
     public static final String GAME_SCOREP1 = "Player1Score";
     public static final String GAME_SCOREP2 = "Player2Score";
+    public static final int MAX_SCORE = 7;
 
 }

@@ -21,4 +21,5 @@
     <string name="create_game_button">Create Game&#8230;</string>
     <string name="update_game_progress">Updating game&#8230;</string>
     <string name="search_players_progress">Searching for players&#8230;</string>
+    <string name="winner_message">The winner is &#8230;</string>
 </resources>

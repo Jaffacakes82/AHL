@@ -18,12 +18,13 @@ enum Player
 
 /* Globals */
 byte mac[] = { 0x90, 0xA2, 0xDA, 0x0D, 0x0E, 0x96 }; // MAC Address of the ethernet shield.
-IPAddress server(192,168,0,6); // IP address of the server as it does not have a fully qualified domain name
+IPAddress server(192,168,0,3); // IP address of the server as it does not have a fully qualified domain name
 IPAddress ip(192,168,1,177); // Set the static IP address to use if the DHCP fails to assign
 int player1Score = 0; // Player 1 goal score
 int player2Score = 0; // Player 2 goal score
 EthernetClient client; // ethernet client object
 boolean gameStarted = false;
+String gameId;
 
 /* Function signatures */
 int ReadDetector(int readPin, int triggerPin);
@@ -82,7 +83,7 @@ void loop()
   
   while (!gameStarted)
   {
-    Serial.println("No game currently started.");
+    //Serial.println("No game currently started.");
     CheckGameState();
     delay(5000);
   }
@@ -123,6 +124,12 @@ void PostScore(Player goalScorer)
   client.println();
   client.println(postData);
   
+  while (client.available() > 0)
+  {
+    char responseChar = client.read();
+    Serial.print(responseChar);
+  }
+  
   if (player1Score == 7 || player2Score == 7)
   {
     player1Score = 0;
@@ -135,9 +142,11 @@ void PostScore(Player goalScorer)
 void CheckGameState()
 {
   String response;
+  String chopped;
+  int indexWhereToCreateSubString = 0;
   
-  Serial.println("Creating HTTP request..");
-  Serial.println();
+  //Serial.println("Creating HTTP request..");
+  //Serial.println();
   
   client.println("GET /gamestarted HTTP/1.1");
   client.println();
@@ -148,7 +157,14 @@ void CheckGameState()
     response += responseChar;
   }
   
-  if (response.endsWith("true"))
+  indexWhereToCreateSubString = response.lastIndexOf('\r');
+  chopped = response.substring(indexWhereToCreateSubString);
+  chopped.trim();
+
+  Serial.println(chopped);
+  Serial.println(indexWhereToCreateSubString);
+  
+  if (chopped.equals("true"))
   {
     gameStarted = true;
     Serial.println("Game started.");

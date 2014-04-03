@@ -37,11 +37,11 @@ public class Game implements Serializable
     {
     }
 
-    public static List<Game> FetchOpenGames()
+    public static List<Game> FetchOpenGames(UUID playerId)
     {
         Client client = new Client();
         List<Game> openGamesList = new ArrayList<Game>();
-        JSONArray openGames = client.FetchGames();
+        JSONArray openGames = client.FetchGames(playerId);
 
         if (openGames.length() > 0)
         {
@@ -84,6 +84,16 @@ public class Game implements Serializable
             }
 
             game.state = GameState.valueOf(gameData.getString(Constants.GAME_STATE));
+
+            if (!gameData.isNull(Constants.GAME_SCOREP1))
+            {
+                game.player1Score = gameData.getInt(Constants.GAME_SCOREP1);
+            }
+
+            if (!gameData.isNull(Constants.GAME_SCOREP2))
+            {
+                game.player2Score = gameData.getInt(Constants.GAME_SCOREP2);
+            }
         }
         catch (JSONException e)
         {

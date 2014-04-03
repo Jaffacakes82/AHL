@@ -13,9 +13,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-
-
 public class GameActivity extends ActionBarActivity
 {
     private Player loggedInPlayer;
@@ -23,10 +20,10 @@ public class GameActivity extends ActionBarActivity
     private View gameView;
     private TextView player1;
     private TextView player2;
-    private TextView versus;
     private Button readyButton;
     private TextView player1Score;
     private TextView player2Score;
+    private TextView winnerMsg;
 
     private TextView gameStatusMessageView;
     private View gameStatusView;
@@ -34,6 +31,7 @@ public class GameActivity extends ActionBarActivity
     private GetGameTask mGetGameTask = null;
     private UpdateGameTask mUpdateGameTask = null;
     private StartGameTask mStartGameTask = null;
+    private GetScoreTask mGetScoreTask = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -47,10 +45,11 @@ public class GameActivity extends ActionBarActivity
         gameView = findViewById(R.id.game);
         player1 = (TextView) findViewById(R.id.player1);
         player2 = (TextView) findViewById(R.id.player2);
-        versus = (TextView) findViewById(R.id.versusText);
         readyButton = (Button) findViewById(R.id.readyBtn);
         player1Score = (TextView) findViewById(R.id.player1Score);
         player2Score = (TextView) findViewById(R.id.player2Score);
+        winnerMsg = (TextView) findViewById(R.id.winnerTextView);
+        winnerMsg.setVisibility(winnerMsg.GONE);
 
         gameStatusMessageView = (TextView) findViewById(R.id.game_status_message);
         gameStatusView = findViewById(R.id.game_status);
@@ -65,26 +64,43 @@ public class GameActivity extends ActionBarActivity
                 currentGame.state = GameState.STARTED;
                 currentGame.player1Score = 0;
                 currentGame.player2Score = 0;
-                // Show a progress spinner, and kick off a background task to
-                // perform the user login attempt.
-                gameStatusMessageView.setText(R.string.update_game_progress);
+
+                gameStatusMessageView.setText(R.string.start_game_progress);
                 showProgress(true);
-                mUpdateGameTask = new UpdateGameTask();
-                mUpdateGameTask.execute((Void) null);
+                mStartGameTask = new StartGameTask();
+                mStartGameTask.execute((Void) null);
             }
         });
     }
 
-    public void startGame()
+    public void getScore()
     {
-        gameStatusMessageView.setText(R.string.start_game_progress);
-        showProgress(true);
-        mStartGameTask = new StartGameTask();
-        mStartGameTask.execute((Void) null);
+        mGetScoreTask = new GetScoreTask();
+        mGetScoreTask.execute((Void) null);
     }
 
-    public void getScores()
-    {}
+    public void updateScoreUI()
+    {
+        player1Score.setText(String.valueOf(currentGame.player1Score));
+        player2Score.setText(String.valueOf(currentGame.player2Score));
+
+        if (currentGame.player1Score < Constants.MAX_SCORE && currentGame.player2Score < Constants.MAX_SCORE)
+        {
+            getScore();
+        }
+        else if (currentGame.player1Score == Constants.MAX_SCORE)
+        {
+            currentGame.winner = currentGame.player1;
+            winnerMsg.setVisibility(winnerMsg.VISIBLE);
+            winnerMsg.setText(R.string.winner_message + currentGame.player1.username);
+        }
+        else if (currentGame.player2Score == Constants.MAX_SCORE)
+        {
+            currentGame.winner = currentGame.player2;
+            winnerMsg.setVisibility(winnerMsg.VISIBLE);
+            winnerMsg.setText(R.string.winner_message + currentGame.player2.username);
+        }
+    }
 
     public void displayGame()
     {
@@ -137,8 +153,6 @@ public class GameActivity extends ActionBarActivity
             player1Score.setVisibility(player1Score.VISIBLE);
             player2Score.setVisibility(player2Score.VISIBLE);
             readyButton.setVisibility(readyButton.GONE);
-
-            startGame();
         }
     }
 
@@ -317,7 +331,7 @@ public class GameActivity extends ActionBarActivity
             try
             {
                 Client client = new Client();
-                client.StartGame(currentGame.id);
+                client.StartGame(currentGame);
             }
             catch (Exception e)
             {
@@ -335,7 +349,8 @@ public class GameActivity extends ActionBarActivity
 
             if (success)
             {
-                getScores();
+                displayGame();
+                getScore();
             }
             else
             {
@@ -346,6 +361,45 @@ public class GameActivity extends ActionBarActivity
         protected void onCancelled()
         {
             mUpdateGameTask = null;
+            showProgress(false);
+        }
+    }
+
+    public class GetScoreTask extends AsyncTask<Void, Void, Boolean>
+    {
+        @Override
+        protected Boolean doInBackground(Void... params)
+        {
+            try
+            {
+                currentGame = Game.GetGame(currentGame.id);
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success)
+        {
+            mGetGameTask = null;
+
+            if (success)
+            {
+                updateScoreUI();
+            }
+            else
+            {
+            }
+        }
+
+        @Override
+        protected void onCancelled()
+        {
+            mGetGameTask = null;
             showProgress(false);
         }
     }

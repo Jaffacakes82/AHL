@@ -73,7 +73,7 @@ public class Client
         startGameUri = URI.create(String.format("%s:%d%s", defaultHost, defaultPort, startGameQuery));
     }
 
-    public boolean StartGame(UUID gameId)
+    public boolean StartGame(Game gameToStart)
     {
         HttpClient client = new DefaultHttpClient();
         JSONObject gameData = new JSONObject();
@@ -81,7 +81,12 @@ public class Client
 
         try
         {
-            gameData.put(Constants.GAME_ID, gameId);
+            gameData.put(Constants.GAME_ID, gameToStart.id);
+            gameData.put(Constants.GAME_PLAYER1, gameToStart.player1.id);
+            gameData.put(Constants.GAME_PLAYER2, gameToStart.player2.id);
+            gameData.put(Constants.GAME_STATE, gameToStart.state.toString());
+            gameData.put(Constants.GAME_SCOREP1, gameToStart.player1Score);
+            gameData.put(Constants.GAME_SCOREP2, gameToStart.player2Score);
         }
         catch (JSONException e)
         {
@@ -186,6 +191,11 @@ public class Client
                 gameData.put(Constants.GAME_SCOREP1, currentGame.player1Score);
                 gameData.put(Constants.GAME_SCOREP2, currentGame.player2Score);
             }
+
+            if (currentGame.winner != null)
+            {
+                gameData.put(Constants.GAME_WINNER, currentGame.winner.id);
+            }
         }
         catch (JSONException e)
         {
@@ -223,16 +233,30 @@ public class Client
         }
     }
 
-    public JSONArray FetchGames()
+    public JSONArray FetchGames(UUID playerId)
     {
         HttpClient client = new DefaultHttpClient();
-        HttpGet request = new HttpGet(gamesListUri);
+        HttpPost request = new HttpPost(gamesListUri);
         HttpResponse response;
         JSONArray gameData;
         String responseString;
+        JSONObject playerData = new JSONObject();
 
         try
         {
+            playerData.put(Constants.PLAYER_ID, playerId);
+        }
+        catch (JSONException e)
+        {
+            return null;
+        }
+
+        try
+        {
+            StringEntity jsonString = new StringEntity(playerData.toString());
+            request.addHeader("content-type", "application/json");
+            request.setEntity(jsonString);
+
             response = client.execute(request);
             HttpEntity responseEntity = response.getEntity();
             responseString = EntityUtils.toString(responseEntity);

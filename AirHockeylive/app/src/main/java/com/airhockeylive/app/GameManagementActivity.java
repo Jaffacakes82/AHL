@@ -225,7 +225,7 @@ public class GameManagementActivity extends Activity
             try
             {
                 openGames = new ArrayList<Game>();
-                openGames = Game.FetchOpenGames();
+                openGames = Game.FetchOpenGames(loggedInPlayer.id);
             }
             catch (Exception e)
             {

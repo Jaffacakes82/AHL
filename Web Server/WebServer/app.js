@@ -51,6 +51,7 @@ console.log("Air Hockey - Live! Server. Port: 3000");
 * Global Variable Declarations.
 *************************/
 var gameStarted = false;
+var scoreJson = null;
 
 /***********************
 * BASE 
@@ -74,16 +75,36 @@ app.get('/gamestarted', function (req,res)
 ****************************/
 app.post('/startgame', function(req, res)
 {
-	gameStarted = true;
-	var gameId = req.body.ID;
+	var id = req.body.ID;
+	var player1 = req.body.Player1;
+	var player2 = req.body.Player2;
+	var state = req.body.State;
+	var scorep1 = req.body.Player1Score;
+	var scorep2 = req.body.Player2Score;
 	
-	console.log(gameId);
-	
-	if (gameStarted)
+	if (id != null)
 	{
-		res.send("true");
+		console.log("Starting game with ID: " + id);
+		
+		UpdateGame(id, player1, player2, state, scorep1, scorep2, function (success) 
+		{
+			if (success)
+			{
+				console.log("Game Started Successfully.");
+				gameStarted = true;
+				res.send("true");
+			}
+			else
+			{
+				console.log("Failed to start game.");
+				res.send("false");
+			}
+		});
 	}
 	
+	console.log(gameStarted);
+	
+	RefreshScore(scorep1, scorep2);
 });
 
 /*****************************************************
@@ -97,7 +118,8 @@ app.post('/goal', function (req,res)
 	console.log("Player 1 score: " + score1);
 	console.log("Player 2 score: " + score2);
 	
-	RefreshScore(res, score1, score2);
+	RefreshScore(score1, score2);
+	res.send();
 });
 
 
@@ -106,13 +128,13 @@ app.post('/goal', function (req,res)
 *****************************/
 app.get('/game', function(req,res)
 {
-	if (feed == null)
+	if (scoreJson == null)
 	{
 		res.send("Game not started.");
 	}
 	else
 	{
-		res.send(feed);
+		res.send(scoreJson);
 	}
 });
 
@@ -172,14 +194,17 @@ app.post('/creategame', function (req, res)
 	});
 });
 
-/******************************
-* GET LIST OF AVAILABLE GAMES	
-*******************************/
-app.get('/gameslist', function (req,res)
+/**************************************************
+* GET LIST OF AVAILABLE GAMES FOR A GIVEN PLAYERID	
+***************************************************/
+app.post('/gameslist', function (req,res)
 {
 	console.log("Getting games list.");
 	
-	FetchGamesList(function (success, result)
+	var playerId = req.body.ID;
+	console.log("Player ID: " + playerId);
+	
+	FetchGamesList(playerId, function (success, result)
 	{
 		if (success)
 		{
@@ -232,9 +257,6 @@ app.post('/getplayer', function (req, res)
 {
 	var id = req.body.ID;
 	
-	console.log("\n");
-	console.log("Fetching player with ID: " + id);
-	
 	FetchPlayer(id, function (success, result)
 	{
 		if (success)
@@ -245,7 +267,6 @@ app.post('/getplayer', function (req, res)
 			}
 			else
 			{
-				console.log("Found player with id: " + id);
 				res.send(result);
 			}
 		}
@@ -263,9 +284,6 @@ app.post('/getgame', function (req, res)
 {
 	var id = req.body.ID;
 	
-	console.log("\n");
-	console.log("Fetching game with ID: " + id);
-	
 	FetchGame(id, function (success, result)
 	{
 		if (success)
@@ -276,7 +294,6 @@ app.post('/getgame', function (req, res)
 			}
 			else
 			{
-				console.log("Found game with id: " + id);
 				res.send(result);
 			}
 		}
@@ -393,10 +410,10 @@ function FetchGame(id, callback)
 /****************************
 * FETCH GAMES LIST FUNCTION
 ****************************/
-function FetchGamesList(callback)
+function FetchGamesList(playerId, callback)
 {
-	var inserts = [ 'OPEN' ];
-	var sql = 'SELECT * FROM game WHERE (State = ?)';
+	var inserts = [ 'OPEN', playerId, playerId ];
+	var sql = 'SELECT * FROM game WHERE (State = ? OR Player1 = ? OR Player2 = ?)';
 	
 	sql = mysql.format(sql, inserts);
 	
@@ -489,12 +506,12 @@ function LoginUser(username, password, callback)
 /********************************************************************
 * REFRESH XML FUNCTION
 *********************************************************************/
-function RefreshScore(response, player1Score, player2Score)
+function RefreshScore(player1Score, player2Score)
 {
 	var scores = [];
 	
-	scores.push({"player1score":player1score});
-	scores.push({"player2score":plsayer2score});
+	scores.push({"player1score":player1Score});
+	scores.push({"player2score":player2Score});
 	
-	response.send(JSON.stringify(scores));
+	scoreJson = JSON.stringify(scores);
 }
