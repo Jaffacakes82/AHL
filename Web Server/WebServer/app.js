@@ -50,7 +50,7 @@ console.log("Air Hockey - Live! Server. Port: 3000");
 /*************************
 * Global Variable Declarations.
 *************************/
-var gameStarted = false;
+var gameId = false;
 var scoreJson = null;
 
 /***********************
@@ -63,11 +63,16 @@ app.get('/', function(req, res)
 
 /*********************************
 * HANDLE GAME STARTED GET REQUEST
-***********************************/
-app.get('/gamestarted', function (req,res)
+**********************************/
+app.get('/gamestarted', function (req, res)
 {
 	console.log("Game start status requested.");
-	res.send(gameStarted);
+	res.send("ID:" + gameId);
+	
+	if (gameId != false)
+	{
+		gameId = false;
+	}
 });
 
 /***************************
@@ -91,7 +96,7 @@ app.post('/startgame', function(req, res)
 			if (success)
 			{
 				console.log("Game Started Successfully.");
-				gameStarted = true;
+				gameId = id;
 				res.send("true");
 			}
 			else
@@ -102,18 +107,61 @@ app.post('/startgame', function(req, res)
 		});
 	}
 	
-	console.log(gameStarted);
-	
 	RefreshScore(scorep1, scorep2);
 });
 
 /*****************************************************
-* HANDLE ADD ITEM GET REQUEST
+* HANDLE GOAL REQUEST
 ******************************************************/
 app.post('/goal', function (req,res)
 {
 	var score1 = req.body.player1;
 	var score2 = req.body.player2;
+	var relatedGameId = req.body.gameId;
+	
+	console.log("GAMEID: " + gameId);
+	
+	GetPlayerInfo(relatedGameId, function (success, player1Id, player2Id, player1Twitter, player2Twitter)
+	{
+		if (success)
+		{
+			if (score1 == 7 || score2 == 7)
+			{
+				if (score1 == 7)
+				{
+					tweet.post('statuses/update', { status: 'Air Hockey - Live! ' + player1Twitter + ' just beat ' + player2Twitter }, function(err, reply) {
+					
+						if (err)
+						{
+							console.log(err);
+						}
+					})
+				}
+				else
+				{
+					tweet.post('statuses/update', { status: 'Air Hockey - Live! ' + player2Twitter + ' just beat ' + player1Twitter }, function(err, reply) {
+					
+						if (err)
+						{
+							console.log(err);
+						}
+					})
+				}
+				
+				//ConfirmWin();
+			}
+			else
+			{
+				tweet.post('statuses/update', { status: 'Air Hockey - Live! Current Score: ' + player1Twitter + ' ' + score1 + ' - ' + score2 + ' ' + player2Twitter }, function(err, reply) {
+					
+					if (err)
+					{
+						console.log(err);
+					}
+				})
+			}
+		}
+	});
 	
 	console.log("Player 1 score: " + score1);
 	console.log("Player 2 score: " + score2);
@@ -213,6 +261,7 @@ app.post('/gameslist', function (req,res)
 		else
 		{
 			console.log(result);
+			res.send(result);
 		}
 	});
 });
@@ -235,6 +284,7 @@ app.post('/login', function(req, res)
 			if (result.length == 0)
 			{
 				console.log("No user found.");
+				res.send(result);
 			}
 			else
 			{
@@ -245,6 +295,7 @@ app.post('/login', function(req, res)
 		else
 		{
 			console.log(result);
+			res.send();
 		}
 	});
 	
@@ -264,6 +315,7 @@ app.post('/getplayer', function (req, res)
 			if (result.length == 0)
 			{
 				console.log("Unable to fetch player with id: " + id);
+				res.send(result);
 			}
 			else
 			{
@@ -273,6 +325,7 @@ app.post('/getplayer', function (req, res)
 		else
 		{
 			console.log(result);
+			res.send();
 		}
 	});
 });
@@ -291,6 +344,7 @@ app.post('/getgame', function (req, res)
 			if (result.length == 0)
 			{
 				console.log("Unable to fetch game with id: " + id);
+				res.send(result);
 			}
 			else
 			{
@@ -300,6 +354,7 @@ app.post('/getgame', function (req, res)
 		else
 		{
 			console.log(result);
+			res.send();
 		}
 	});
 });
@@ -335,6 +390,42 @@ app.post('/updategame', function (req,res)
 		});
 	}
 });
+
+function GetPlayerInfo(gameId, callback)
+{
+	var sql = 'SELECT player.ID, player.Username, player.Twitter FROM game LEFT JOIN player ON game.Player1 = player.ID OR game.Player2 = player.ID WHERE game.ID = ?';
+	var inserts = [ gameId ];
+	
+	sql = mysql.format(sql, inserts);
+	
+	var query = connection.query(sql, function (err, result)
+	{
+		if (err)
+		{
+			console.log(err);
+			callback(false, "", "", "", "");
+		}
+		else
+		{	
+			if (result[0].Twitter != "@" && result[1].Twitter != "@")
+			{
+				callback(true, result[0].ID, result[1].ID, result[0].Twitter, result[1].Twitter);
+			}
+			else if (result[0].Twitter == "@" && result[1].Twitter != "@")
+			{
+				callback(true, result[0].ID, result[1].ID, result[0].Username, result[1].Twitter);
+			}
+			else if (result[0].Twitter != "@" && result[1].Twitter == "@")
+			{
+				callback(true, result[0].ID, result[1].ID, result[0].Twitter, result[1].Username);
+			}
+			else
+			{
+				callback(true, result[0].ID, result[1].ID, result[0].Username, result[1].Username);
+			}
+		}
+	});
+}
 
 /********************
 CREATE GAME FUNCTION

@@ -45,7 +45,6 @@ void setup()
   
   // start the Ethernet connection:
   Serial.println("Attempting to enable ethernet port.");
-  Serial.println();
   
   if (Ethernet.begin(mac) == 0) 
   {
@@ -61,8 +60,7 @@ void setup()
   
   //Establish client connection
   Serial.println("Attempting to connect to server..");
-  Serial.println();
-  
+ 
   if (client.connect(server, serverPort))
   {
     Serial.println("Connected to server.");
@@ -83,23 +81,22 @@ void loop()
   
   while (!gameStarted)
   {
-    //Serial.println("No game currently started.");
     CheckGameState();
-    delay(5000);
+    delay(3000);
   }
   
   while (gameStarted)
   {
     if (ReadDetector(player1DetectorPin, player1LedPin) == 0)
     {
-      goalScorer = player1;
-      PostScore(player1);
-      Serial.println("DETECTED 1.");
-      delay(5000);
+      Serial.println("Infrared Detected.");
     }
     else
     {
+      goalScorer = player1;
+      PostScore(player1);
       Serial.println("NOTHING 1.");
+      delay(10000);
     }
   }
 }
@@ -115,7 +112,21 @@ void PostScore(Player goalScorer)
     player2Score++;
   }
   
-  String postData = "{\n\t\"player1\":\"" + String(player1Score) + "\",\n\t\"player2\":\"" + String(player2Score) + "\"\n}";
+  if (!client.connected())
+  {
+    client.stop();
+    
+    if (client.connect(server, serverPort))
+    {
+      Serial.println("Connected to server.");
+    }
+    else
+    {
+      Serial.println("Failed to connect to server.");
+    }
+  }
+  
+  String postData = "{\n\t\"player1\":\"" + String(player1Score) + "\",\n\t\"player2\":\"" + String(player2Score) + "\",\n\t\"gameId\":\"" + gameId + "\"\n}";
   
   client.println("POST /goal HTTP/1.1");
   client.println("Content-Type: application/json");
@@ -135,6 +146,7 @@ void PostScore(Player goalScorer)
     player1Score = 0;
     player2Score = 0;
     gameStarted = false;
+    gameId = "";
   }
 }
 
@@ -142,13 +154,24 @@ void PostScore(Player goalScorer)
 void CheckGameState()
 {
   String response;
-  String chopped;
   int indexWhereToCreateSubString = 0;
   
-  //Serial.println("Creating HTTP request..");
-  //Serial.println();
+  if (!client.connected())
+  {
+    client.stop();
+    
+    if (client.connect(server, serverPort))
+    {
+      Serial.println("Connected to server.");
+    }
+    else
+    {
+      Serial.println("Failed to connect to server.");
+    }
+  }
   
   client.println("GET /gamestarted HTTP/1.1");
+  client.println("Connection: close");
   client.println();
   
   while (client.available() > 0)
@@ -157,17 +180,25 @@ void CheckGameState()
     response += responseChar;
   }
   
-  indexWhereToCreateSubString = response.lastIndexOf('\r');
-  chopped = response.substring(indexWhereToCreateSubString);
-  chopped.trim();
-
-  Serial.println(chopped);
-  Serial.println(indexWhereToCreateSubString);
+  indexWhereToCreateSubString = response.indexOf("ID:") + 3;
+  gameId = response.substring(indexWhereToCreateSubString);
   
-  if (chopped.equals("true"))
+  if (gameId != "")
   {
-    gameStarted = true;
-    Serial.println("Game started.");
+    if (gameId != "false")
+    {
+      gameStarted = true;
+      Serial.println(gameId);
+      Serial.println("Game Started.");
+    }
+    else
+    {
+      Serial.println("Response was false.");
+    }
+  }
+  else
+  {
+    Serial.println("Blank response.");
   }
 }
 

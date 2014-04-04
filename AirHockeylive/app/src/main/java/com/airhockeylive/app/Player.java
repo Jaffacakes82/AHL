@@ -46,25 +46,32 @@ public class Player implements Serializable
 
         JSONObject playerData = client.Login(username, password);
 
-        UUID id;
-        String playerUsername;
-        String playerPassword;
-        String playerName;
-        String playerTwitter;
-
-        try
+        if (playerData != null)
         {
-            id = UUID.fromString(playerData.getString(Constants.PLAYER_ID));
-            playerUsername = playerData.getString(Constants.PLAYER_USERNAME);
-            playerPassword = playerData.getString(Constants.PLAYER_PASSWORD);
-            playerName = playerData.getString(Constants.PLAYER_NAME);
-            playerTwitter = playerData.getString(Constants.PLAYER_TWITTER);
+            UUID id;
+            String playerUsername;
+            String playerPassword;
+            String playerName;
+            String playerTwitter;
+
+            try
+            {
+                id = UUID.fromString(playerData.getString(Constants.PLAYER_ID));
+                playerUsername = playerData.getString(Constants.PLAYER_USERNAME);
+                playerPassword = playerData.getString(Constants.PLAYER_PASSWORD);
+                playerName = playerData.getString(Constants.PLAYER_NAME);
+                playerTwitter = playerData.getString(Constants.PLAYER_TWITTER);
+            }
+            catch (JSONException e)
+            {
+                return null;
+            }
+
+            return new Player(id, playerUsername, playerPassword, playerName, playerTwitter);
         }
-        catch (JSONException e)
+        else
         {
             return null;
         }
-
-        return new Player(id, playerUsername, playerPassword, playerName, playerTwitter);
     }
 }

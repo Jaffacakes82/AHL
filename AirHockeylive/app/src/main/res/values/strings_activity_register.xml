@@ -3,10 +3,11 @@
 
     <!-- Strings related to registering -->
     <string name="action_register"><b>Register</b></string>
-    <string name="login_progress_registering">Registering&#8230;</string>
+    <string name="register_progress">Registering&#8230;</string>
     <string name="action_go_login">Login Screen</string>
     <string name="prompt_confirm_password">Confirm Password</string>
     <string name="prompt_name">Name (Optional)</string>
-    <string name="prompt_twitter">Twitter Username (Optional)</string>
+    <string name="prompt_twitter">\@Twitter Username (Optional)</string>
     <string name="error_password_mismatch">Passwords do not match</string>
+    <string name="error_registering">Registration failed, please try again</string>
 </resources>

@@ -7,10 +7,8 @@
   },
   "dependencies": {
 	"mysql" : "latest",
-	"rss" : "latest",
     "express": "3.4.8",
     "jade": "*",
-	"xmlbuilder" : "latest",
 	"twit" : "latest"
   }
 }

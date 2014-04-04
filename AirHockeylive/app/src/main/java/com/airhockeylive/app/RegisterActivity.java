@@ -68,7 +68,7 @@ public class RegisterActivity extends Activity
         registerStatusView = findViewById(R.id.register_status);
         registerStatusMessageView = (TextView) findViewById(R.id.register_status_message);
 
-        findViewById(R.id.sign_in_button).setOnClickListener(new View.OnClickListener()
+        findViewById(R.id.register_user_button).setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View view)
@@ -118,11 +118,16 @@ public class RegisterActivity extends Activity
         passwordView.setError(null);
 
         // Store values at the time of the login attempt.
-        username = usernameView.getText().toString();
-        password = passwordView.getText().toString();
-        confirmPassword = confirmPasswordView.getText().toString();
-        name = nameView.getText().toString();
-        twitter = twitterView.getText().toString();
+        username = usernameView.getText().toString().trim();
+        password = passwordView.getText().toString().trim();
+        confirmPassword = confirmPasswordView.getText().toString().trim();
+        name = nameView.getText().toString().trim();
+        twitter = twitterView.getText().toString().trim();
+
+        if (!twitter.startsWith("@"))
+        {
+            twitter = "@" + twitter;
+        }
 
         boolean cancel = false;
         View focusView = null;
@@ -167,7 +172,7 @@ public class RegisterActivity extends Activity
         {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
-            registerStatusMessageView.setText(R.string.login_progress_signing_in);
+            registerStatusMessageView.setText(R.string.register_progress);
             showProgress(true);
             mRegisterTask = new UserRegisterTask();
             mRegisterTask.execute((Void) null);
@@ -261,7 +266,7 @@ public class RegisterActivity extends Activity
             }
             else
             {
-                passwordView.setError(getString(R.string.error_incorrect_password));
+                passwordView.setError(getString(R.string.error_registering));
                 passwordView.requestFocus();
             }
         }

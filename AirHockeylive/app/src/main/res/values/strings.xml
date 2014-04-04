@@ -6,9 +6,9 @@
     <string name="action_settings">Settings</string>
     <string name="prompt_username">Username</string>
     <string name="prompt_password">Password</string>
-    <string name="error_invalid_email">The username is invalid</string>
+    <string name="error_invalid_username">The username is invalid</string>
     <string name="error_invalid_password">This password is too short</string>
-    <string name="error_incorrect_password">This password is incorrect</string>
+    <string name="error_incorrect_credentials">The details entered were not recognised</string>
     <string name="error_field_required">This field is required</string>
     <string name="title_activity_game">GameActivity</string>
     <string name="title_activity_game_list">GameListActivity</string>
