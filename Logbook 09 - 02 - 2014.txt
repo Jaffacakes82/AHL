@@ -1,2 +1,0 @@
-1. Built TCP client in C# and successfully communicated with Node.js TCP server.
-2. Read and write serial data from arduino.
