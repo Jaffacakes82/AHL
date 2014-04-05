@@ -1,13 +1,28 @@
-package com.airhockeylive.app;
+/****************************************************************************
+* Client.java
+* Author: Joseph Ellis
+* Student Number: 10007329
 
-import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+ This file is part of Air Hockey - Live!
+
+ Air Hockey - Live! is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ Air Hockey - Live! is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with Air Hockey - Live!  If not, see <http://www.gnu.org/licenses/>.
+ ***************************************************************************/
+package com.airhockeylive.app;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -17,14 +32,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.UUID;
 
-/**
- * Created by Joe on 25/02/14.
- */
+/* The Client class handles all requests made the web server. */
 public class Client
 {
+    /* Class field declarations */
     private URI registerUri;
 
     private URI loginUri;
@@ -63,6 +76,7 @@ public class Client
 
     public Client()
     {
+        /* Build all of the request URI's in the constructor */
         registerUri = URI.create(String.format("%s:%d%s", defaultHost, defaultPort, registerQuery));
         loginUri = URI.create(String.format("%s:%d%s", defaultHost, defaultPort, loginQuery));
         getPlayerUri = URI.create(String.format("%s:%d%s", defaultHost, defaultPort, getPlayerQuery));
@@ -73,6 +87,12 @@ public class Client
         startGameUri = URI.create(String.format("%s:%d%s", defaultHost, defaultPort, startGameQuery));
     }
 
+    /************************************************
+     * StartGame()
+     * @param gameToStart - The game object to start
+     * @return - a value to determine whether the game
+     * was successfully started.
+     */
     public boolean StartGame(Game gameToStart)
     {
         HttpClient client = new DefaultHttpClient();
@@ -81,6 +101,7 @@ public class Client
 
         try
         {
+            /* Build the JSON object to post to the server */
             gameData.put(Constants.GAME_ID, gameToStart.id);
             gameData.put(Constants.GAME_PLAYER1, gameToStart.player1.id);
             gameData.put(Constants.GAME_PLAYER2, gameToStart.player2.id);
@@ -95,6 +116,7 @@ public class Client
 
         try
         {
+            /* Build the post request */
             HttpPost request = new HttpPost(this.startGameUri);
             StringEntity jsonString = new StringEntity(gameData.toString());
 
@@ -116,7 +138,7 @@ public class Client
 
         if (responseString.equals("true"))
         {
-            return true;
+            return true; // If we got true back from the server.
         }
         else
         {
@@ -124,6 +146,11 @@ public class Client
         }
     }
 
+    /******************************************************************
+     * CreateGame()
+     * @param gameToBeCreated - The game object to create a record for
+     * @return - a boolean to determine success.
+     */
     public boolean CreateGame(Game gameToBeCreated)
     {
         HttpClient client = new DefaultHttpClient();
@@ -132,6 +159,7 @@ public class Client
 
         try
         {
+            /* Build JSON object for posting. */
             gameData.put(Constants.GAME_ID, gameToBeCreated.id);
             gameData.put(Constants.GAME_PLAYER1, gameToBeCreated.player1.id);
             gameData.put(Constants.GAME_STATE, gameToBeCreated.state.toString());
@@ -143,6 +171,7 @@ public class Client
 
         try
         {
+            /* Make the request and get a response */
             HttpPost request = new HttpPost(this.createGameUri);
             StringEntity jsonString = new StringEntity(gameData.toString());
 
@@ -164,7 +193,7 @@ public class Client
 
         if (responseString.equals("true"))
         {
-            return true;
+            return true; // Response from server.
         }
         else
         {
@@ -172,7 +201,11 @@ public class Client
         }
     }
 
-    // Sends the updated game data to the server.
+    /*************************************************
+     * UpdateGame()
+     * @param currentGame - The game object to update.
+     * @return - boolean to determine success.
+     */
     public boolean UpdateGame(Game currentGame)
     {
         HttpClient client = new DefaultHttpClient();
@@ -181,17 +214,20 @@ public class Client
 
         try
         {
+            // Build JSON.
             gameData.put(Constants.GAME_ID, currentGame.id);
             gameData.put(Constants.GAME_PLAYER1, currentGame.player1.id);
             gameData.put(Constants.GAME_PLAYER2, currentGame.player2.id);
             gameData.put(Constants.GAME_STATE, currentGame.state.toString());
 
+            // If the game has started, then we add the scores.
             if (currentGame.state == GameState.STARTED)
             {
                 gameData.put(Constants.GAME_SCOREP1, currentGame.player1Score);
                 gameData.put(Constants.GAME_SCOREP2, currentGame.player2Score);
             }
 
+            // If we have a winner, add that to the JSON to.
             if (currentGame.winner != null)
             {
                 gameData.put(Constants.GAME_WINNER, currentGame.winner.id);
@@ -204,6 +240,7 @@ public class Client
 
         try
         {
+            /* Post the request, get a response. */
             HttpPost request = new HttpPost(this.updateGameUri);
             StringEntity jsonString = new StringEntity(gameData.toString());
 
@@ -225,7 +262,7 @@ public class Client
 
         if (responseString.equals("true"))
         {
-            return true;
+            return true; //Success!
         }
         else
         {
@@ -233,6 +270,11 @@ public class Client
         }
     }
 
+    /**********************************************************
+     * FetchGames()
+     * @param playerId - The ID of the player to get games for
+     * @return - Array of JSON objects containing game data.
+     */
     public JSONArray FetchGames(UUID playerId)
     {
         HttpClient client = new DefaultHttpClient();
@@ -253,6 +295,7 @@ public class Client
 
         try
         {
+            /* Post our request and parse the response into a JSON array. */
             StringEntity jsonString = new StringEntity(playerData.toString());
             request.addHeader("content-type", "application/json");
             request.setEntity(jsonString);
@@ -274,6 +317,11 @@ public class Client
         return gameData;
     }
 
+    /******************************************************************************
+     * Register()
+     * @param playerToRegister - The player object to create a record for in the DB
+     * @return - success flag
+     */
     public boolean Register(Player playerToRegister)
     {
         HttpClient client = new DefaultHttpClient();
@@ -282,6 +330,7 @@ public class Client
 
         try
         {
+            /* Build our JSON object */
             registerData.put("id", playerToRegister.id);
             registerData.put("username", playerToRegister.username);
             registerData.put("password", playerToRegister.password);
@@ -296,6 +345,7 @@ public class Client
 
         try
         {
+            /* Post it off, get response */
             HttpPost request = new HttpPost(this.registerUri);
             StringEntity jsonString = new StringEntity(registerData.toString());
 
@@ -317,7 +367,7 @@ public class Client
 
         if (responseString.equals("true"))
         {
-            return true;
+            return true; // User registered!
         }
         else
         {
@@ -325,7 +375,11 @@ public class Client
         }
     }
 
-    //Fetch a game from the database with a given ID
+    /*************************************
+     * GetGame()
+     * @param id - The ID of the game to fetch
+     * @return - A JSONObject containing the game information.
+     */
     public JSONObject GetGame(String id)
     {
         HttpClient client = new DefaultHttpClient();
@@ -340,11 +394,12 @@ public class Client
         }
         catch (JSONException e)
         {
-            // TODO: do something
+            System.out.print(e);
         }
 
         try
         {
+            /* Build the POST request, and get the response. */
             HttpPost request = new HttpPost(this.getGameUri);
             StringEntity jsonString = new StringEntity(gameIdData.toString());
 
@@ -356,6 +411,7 @@ public class Client
             responseString = EntityUtils.toString(responseEntity);
             gameDataArray = new JSONArray(responseString);
 
+            /* If the array contains a single JSON object, fetch it and return it */
             if (gameDataArray.length() == 1)
             {
                 gameData = gameDataArray.getJSONObject(0);
@@ -364,6 +420,7 @@ public class Client
         }
         catch (Exception ex)
         {
+            System.out.print(ex);
             return null;
         }
         finally
@@ -374,7 +431,11 @@ public class Client
         return null;
     }
 
-    //Fetch a player from the database from a given ID
+    /********************************************
+     * GetPlayer()
+     * @param id - ID of the player to get.
+     * @return - Return a populated player object.
+     */
     public Player GetPlayer(String id)
     {
         HttpClient client = new DefaultHttpClient();
@@ -388,11 +449,12 @@ public class Client
         }
         catch (JSONException ex)
         {
-            // TODO: do something
+            System.out.print(ex);
         }
 
         try
         {
+            /* Build Post request */
             HttpPost request = new HttpPost(this.getPlayerUri);
             StringEntity jsonString = new StringEntity(playerIdData.toString());
 
@@ -413,6 +475,9 @@ public class Client
             client.getConnectionManager().shutdown();
         }
 
+        /* If the JSON array returned from the server has one object, fetch the contents and return
+        a player object
+         */
         if (playerData.length() == 1)
         {
             try
@@ -439,6 +504,12 @@ public class Client
 
     }
 
+    /*******************************************************
+     * Login()
+     * @param username - The username to send to the server to get a player.
+     * @param password - The users password to authenticate with the sever.
+     * @return - JSONObject containing player information.
+     */
     public JSONObject Login(String username, String password)
     {
         HttpClient client = new DefaultHttpClient();
