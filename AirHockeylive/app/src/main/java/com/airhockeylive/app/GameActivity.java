@@ -91,14 +91,16 @@ public class GameActivity extends ActionBarActivity
         else if (currentGame.player1Score == Constants.MAX_SCORE)
         {
             currentGame.winner = currentGame.player1;
+            String message = "The winner is: " + currentGame.player1.username + "!";
+            winnerMsg.setText(message);
             winnerMsg.setVisibility(winnerMsg.VISIBLE);
-            winnerMsg.setText(R.string.winner_message + currentGame.player1.username);
         }
         else if (currentGame.player2Score == Constants.MAX_SCORE)
         {
             currentGame.winner = currentGame.player2;
+            String message = "The winner is: " + currentGame.player2.username + "!";
+            winnerMsg.setText(message);
             winnerMsg.setVisibility(winnerMsg.VISIBLE);
-            winnerMsg.setText(R.string.winner_message + currentGame.player2.username);
         }
     }
 
@@ -117,7 +119,7 @@ public class GameActivity extends ActionBarActivity
                 mGetGameTask = new GetGameTask();
                 mGetGameTask.execute((Void) null);
             }
-            else
+            else if (currentGame.state != GameState.STARTED)
             {
                 player2.setText(currentGame.player2.username);
                 readyButton.setVisibility(readyButton.VISIBLE);
@@ -260,6 +262,7 @@ public class GameActivity extends ActionBarActivity
             if (success)
             {
                 displayGame();
+                getScore();
             }
             else
             {

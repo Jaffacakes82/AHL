@@ -1,3 +1,5 @@
+/***********************************
+
 /************************
 * Required packages.
 ************************/
@@ -51,7 +53,7 @@ console.log("Air Hockey - Live! Server. Port: 3000");
 * Global Variable Declarations.
 *************************/
 var gameId = false;
-var scoreJson = null;
+var winningScore = 7;
 
 /***********************
 * BASE 
@@ -106,8 +108,6 @@ app.post('/startgame', function(req, res)
 			}
 		});
 	}
-	
-	RefreshScore(scorep1, scorep2);
 });
 
 /*****************************************************
@@ -118,6 +118,11 @@ app.post('/goal', function (req,res)
 	var score1 = req.body.player1;
 	var score2 = req.body.player2;
 	var relatedGameId = req.body.gameId;
+	var date = new Date();
+	var dateString = String(date);
+	
+	var indexToParseDate = dateString.indexOf("GMT");
+	dateString = dateString.substring(0, indexToParseDate);
 	
 	console.log("GAMEID: " + gameId);
 	
@@ -125,11 +130,11 @@ app.post('/goal', function (req,res)
 	{
 		if (success)
 		{
-			if (score1 == 7 || score2 == 7)
+			if (score1 == winningScore || score2 == winningScore)
 			{
-				if (score1 == 7)
+				if (score1 == winningScore)
 				{
-					tweet.post('statuses/update', { status: 'Air Hockey - Live! ' + player1Twitter + ' just beat ' + player2Twitter }, function(err, reply) {
+					tweet.post('statuses/update', { status: dateString + ' Air Hockey - Live! ' + player1Twitter + ' just beat ' + player2Twitter + ' #airhockeylive' }, function(err, reply) {
 					
 						if (err)
 						{
@@ -139,7 +144,7 @@ app.post('/goal', function (req,res)
 				}
 				else
 				{
-					tweet.post('statuses/update', { status: 'Air Hockey - Live! ' + player2Twitter + ' just beat ' + player1Twitter }, function(err, reply) {
+					tweet.post('statuses/update', { status: dateString + ' Air Hockey - Live! ' + player2Twitter + ' just beat ' + player1Twitter + ' #airhockeylive' }, function(err, reply) {
 					
 						if (err)
 						{
@@ -148,25 +153,38 @@ app.post('/goal', function (req,res)
 					})
 				}
 				
-				//ConfirmWin();
+				ConfirmWin(relatedGameId, player1Id, player2Id, score1, score2, function (sucess)
+				{
+					if (success)
+					{
+						console.log("Win Recorded.");
+					}
+				});
 			}
 			else
 			{
-				tweet.post('statuses/update', { status: 'Air Hockey - Live! Current Score: ' + player1Twitter + ' ' + score1 + ' - ' + score2 + ' ' + player2Twitter }, function(err, reply) {
+				tweet.post('statuses/update', { status: dateString + ' Air Hockey - Live! Current Score: ' + player1Twitter + ' ' + score1 + ' - ' + score2 + ' ' + player2Twitter + ' #airhockeylive' }, function(err, reply) {
 					
 					if (err)
 					{
 						console.log(err);
 					}
 				})
+				
+				UpdateScore(relatedGameId, score1, score2, function (success)
+				{
+					if (success)
+					{
+						console.log("Score updated.");
+					}
+				});
 			}
 		}
 	});
 	
 	console.log("Player 1 score: " + score1);
 	console.log("Player 2 score: " + score2);
-	
-	RefreshScore(score1, score2);
+
 	res.send();
 });
 
@@ -391,12 +409,62 @@ app.post('/updategame', function (req,res)
 	}
 });
 
+function ConfirmWin(gameId, player1Id, player2Id, player1Score, player2Score, callback)
+{
+	var sql;
+
+	if (player1Score == winningScore)
+	{
+		sql = 'UPDATE game SET Player1Score = ?, Player2Score = ?, State = ?, Winner = ? WHERE game.ID = ?';
+		var inserts = [ player1Score, player2Score, 'FINISHED', player1Id, gameId ];
+		sql = mysql.format(sql, inserts);
+	}
+	else
+	{
+		sql = 'UPDATE game SET Player1Score = ?, Player2Score = ?, State = ?, Winner = ? WHERE game.ID = ?';
+		var inserts = [ player1Score, player2Score, 'FINISHED', player2Id, gameId ];
+		sql = mysql.format(sql, inserts);
+	}
+	
+	var query = connection.query(sql, function (err, result)
+	{
+		if (err)
+		{
+			console.log(err)
+		}
+		else
+		{
+			callback(true);
+		}
+	});
+}
+
+function UpdateScore(gameId, player1Score, player2Score, callback)
+{
+	var sql = 'UPDATE game SET Player1Score = ?, Player2Score = ? WHERE game.ID = ?'
+	var inserts = [ player1Score, player2Score, gameId ];
+	sql = mysql.format(sql, inserts);
+	
+	var query = connection.query(sql, function (err, result)
+	{
+		if (err)
+		{
+			console.log(err)
+		}
+		else
+		{
+			callback(true);
+		}
+	});
+}
+
 function GetPlayerInfo(gameId, callback)
 {
-	var sql = 'SELECT player.ID, player.Username, player.Twitter FROM game LEFT JOIN player ON game.Player1 = player.ID OR game.Player2 = player.ID WHERE game.ID = ?';
+	var sql = 'CALL GetPlayerInfo(?);';
 	var inserts = [ gameId ];
-	
 	sql = mysql.format(sql, inserts);
+	
+	console.log(sql);
 	
 	var query = connection.query(sql, function (err, result)
 	{
@@ -407,21 +475,21 @@ function GetPlayerInfo(gameId, callback)
 		}
 		else
 		{	
-			if (result[0].Twitter != "@" && result[1].Twitter != "@")
+			if (result[0][0].Twitter != "@" && result[0][1].Twitter != "@")
 			{
-				callback(true, result[0].ID, result[1].ID, result[0].Twitter, result[1].Twitter);
+				callback(true, result[0][0].ID, result[0][1].ID, result[0][0].Twitter, result[0][1].Twitter);
 			}
-			else if (result[0].Twitter == "@" && result[1].Twitter != "@")
+			else if (result[0][0].Twitter == "@" && result[0][1].Twitter != "@")
 			{
-				callback(true, result[0].ID, result[1].ID, result[0].Username, result[1].Twitter);
+				callback(true, result[0][0].ID, result[0][1].ID, result[0][0].Username, result[0][1].Twitter);
 			}
-			else if (result[0].Twitter != "@" && result[1].Twitter == "@")
+			else if (result[0][0].Twitter != "@" && result[0][1].Twitter == "@")
 			{
-				callback(true, result[0].ID, result[1].ID, result[0].Twitter, result[1].Username);
+				callback(true, result[0][0].ID, result[0][1].ID, result[0][0].Twitter, result[0][1].Username);
 			}
 			else
 			{
-				callback(true, result[0].ID, result[1].ID, result[0].Username, result[1].Username);
+				callback(true, result[0][0].ID, result[0][1].ID, result[0][0].Username, result[0][1].Username);
 			}
 		}
 	});
@@ -503,8 +571,8 @@ function FetchGame(id, callback)
 ****************************/
 function FetchGamesList(playerId, callback)
 {
-	var inserts = [ 'OPEN', playerId, playerId ];
-	var sql = 'SELECT * FROM game WHERE (State = ? OR Player1 = ? OR Player2 = ?)';
+	var inserts = [ 'OPEN', playerId, playerId, 'FINISHED' ];
+	var sql = 'SELECT * FROM game WHERE (State = ? OR ((Player1 = ? OR Player2 = ?) AND State != ?))';
 	
 	sql = mysql.format(sql, inserts);
 	
@@ -592,17 +660,4 @@ function LoginUser(username, password, callback)
 			callback(true, result);
 		}
 	});
-}
-
-/********************************************************************
-* REFRESH XML FUNCTION
-*********************************************************************/
-function RefreshScore(player1Score, player2Score)
-{
-	var scores = [];
-	
-	scores.push({"player1score":player1Score});
-	scores.push({"player2score":player2Score});
-	
-	scoreJson = JSON.stringify(scores);
 }

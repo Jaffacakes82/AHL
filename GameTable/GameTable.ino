@@ -10,7 +10,7 @@
 
 /* Enum used to determine the goal scorer */
 enum Player
-{
+{ 
   unknown,
   player1,
   player2
