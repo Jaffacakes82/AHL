@@ -69,10 +69,11 @@ var winningScore = 7; // The maximum score in a game of Air Hockey - Live!
 * GET: '/'
 *
 * Base address of the Air Hockey - Live! Server
+* Will display the league table.
 ************************************************/
 app.get('/', function(req, res)
 {
-	res.send("Air Hockey - Live!"); //Send a simple string in the response as for now this page is widely unused.
+	res.send("Air Hockey - Live! Website coming soon..."); //Send a simple string in the response as for now this page is widely unused.
 });
 
 /***********************************************
@@ -201,6 +202,7 @@ app.post('/goal', function (req, res)
 					
 					if (err)
 					{
+						console.log("Twitter Error");
 						console.log(err);
 					}
 				})

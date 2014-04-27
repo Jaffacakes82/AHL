@@ -524,6 +524,7 @@ public class Client
         }
         catch (JSONException e)
         {
+            System.out.print(e);
             return null;
         }
 

@@ -22,8 +22,10 @@ You should have received a copy of the GNU General Public License
 along with Air Hockey - Live!  If not, see <http://www.gnu.org/licenses/>.
 ***************************************************************************/
 
-#define player1DetectorPin 2 // Player 1 IR Sensor on this pin
-#define player1LedPin 7 // Player 1 IR LED on this pin
+#define player2DetectorPin 2 // Player 2 IR Sensor on this pin
+#define player1DetectorPin 3 // Player 1 IR sensor on this pin
+#define player2LedPin 7 // Player 2 IR LED on this pin
+#define player1LedPin 8 // Player 1 IR LED on this pin
 //#define player1DetectorPin 2 // Player 2 IR Sensor on this pin
 //#define player1LedPin 7 // Player 2 IR LED on this pin
 #define serverPort 3000 // Server port
@@ -43,7 +45,7 @@ enum Player
 /* Global Variables */
 byte mac[] = { 0x90, 0xA2, 0xDA, 0x0D, 0x0E, 0x96 }; // MAC Address of the ethernet shield.
 IPAddress server(192,168,0,3); // IP address of the server as it does not have a fully qualified domain name
-IPAddress ip(192,168,1,177); // Set the static IP address to use if the DHCP fails to assign
+IPAddress ip(192,168,0,177); // Set the static IP address to use if the DHCP fails to assign
 int player1Score = 0; // Player 1 goal score
 int player2Score = 0; // Player 2 goal score
 EthernetClient client; // ethernet client object
@@ -63,6 +65,10 @@ void setup()
   
   //Set the player 1 IR led to output mode
   pinMode(player1LedPin, OUTPUT);
+  
+  pinMode(player2DetectorPin, INPUT);
+  
+  pinMode(player2LedPin, OUTPUT);
   
   //Enable serial port with baud rate 9600
   Serial.begin(9600);
@@ -113,7 +119,7 @@ void loop()
   /* While the game is started, we want to read our infrared sensors */
   while (gameStarted)
   {
-    if (ReadDetector(player1DetectorPin, player1LedPin) == 0)
+    if (ReadDetector(player2DetectorPin, player2LedPin) == 0)
     {
       Serial.println("Infrared Detected.");
     }
@@ -121,6 +127,18 @@ void loop()
     {
       goalScorer = player1;
       PostScore(player1);
+      Serial.println("NOTHING 1.");
+      delay(10000);
+    }
+    
+    if (ReadDetector(player1DetectorPin, player1LedPin) == 0)
+    {
+      Serial.println("Infrared Detected.");
+    }
+    else
+    {
+      goalScorer = player2;
+      PostScore(player2);
       Serial.println("NOTHING 1.");
       delay(10000);
     }
@@ -256,7 +274,7 @@ void CheckGameState()
 *
 * Returns either a 1 or a 0 depending if infrared
 * is detected or not, this is a code sample provided
-* by the Arduino community. (Arduino Playground, 2014) http://playground.arduino.cc/Main/PanasonicIrSensor#.U0BLzfldWSo
+* by the Arduino community. (Arduino Playground, 2014) 
 ******************************************************/
 int ReadDetector(int readPin, int triggerPin)
 {
